@@ -1,5 +1,3 @@
-// const { API_URL, US_API_URL, CN_API_URL } = require("../constants/urls");
-// const axios = require("axios");
 import StoryblokClient from "storyblok-js-client";
 import chalk from "chalk";
 

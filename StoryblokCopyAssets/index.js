@@ -1,8 +1,3 @@
-// const commander = require("commander");
-// const { COMMANDS } = require("./constants/commands");
-// const { loginWithToken, getStoryblokClient } = require("./utils/auth");
-// const async = require("async");
-
 import { Command } from "commander";
 import SyncAssets from "./utils/syncAssets.js";
 
