@@ -9,14 +9,20 @@ program
   .requiredOption("--region <REGION>", "Region of the user")
   .requiredOption("--source <SPACE_ID>", "Source space id")
   .requiredOption("--target <SPACE_ID>", "Target space id")
-  .requiredOption("--starts-with <VALUE>", "starts with")
+  .requiredOption("--stories-starts-with <VALUE>", "starts with")
   .requiredOption(
-    "--parent-folder-uuid <VALUE>",
-    "UUID from the Asset parent folder"
+    "--asset-folder-name <VALUE>",
+    "Name from the Asset parent folder"
   )
   .action(async (options) => {
-    const { token, region, source, target, startsWith, parentFolderUuid } =
-      options;
+    const {
+      token,
+      region,
+      source,
+      target,
+      storiesStartsWith,
+      assetFolderName,
+    } = options;
 
     try {
       const syncAssets = await new SyncAssets(
@@ -24,8 +30,8 @@ program
         region,
         source,
         target,
-        startsWith,
-        parentFolderUuid
+        storiesStartsWith,
+        assetFolderName
       );
 
       syncAssets.start();

@@ -46,7 +46,7 @@ export default class DeleteAssets {
       console.log();
       await this.removeAssetsFolders();
     } catch (e) {
-      console.log(chalk.black.bgRedBright(" x Something went wrong "));
+      console.log(chalk.black.bgRedBrightBright(" x Something went wrong "));
       console.log(e);
     }
   }
@@ -63,7 +63,7 @@ export default class DeleteAssets {
       console.log(chalk.black.bgGreen(" ✓ "), `Asset Folders fetched `);
     } catch (e) {
       console.log(
-        chalk.black.bgRedBright(" x "),
+        chalk.black.bgRedBrightBright(" x "),
         ` ${e.response}: Double check the space id`
       );
       throw e;

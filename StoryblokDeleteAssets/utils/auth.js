@@ -33,17 +33,17 @@ export default class Auth {
     } catch (e) {
       if (e.status === 404) {
         console.log(
-          chalk.black.bgRed(" x "),
+          chalk.black.bgRedBright(" x "),
           ` ${e.response}: Double check the space id`
         );
       } else if (e.status === 401) {
         console.log(
-          chalk.black.bgRed(" x "),
+          chalk.black.bgRedBright(" x "),
           ` ${e.response}: Double check the personal access token `
         );
       } else {
         console.log(
-          chalk.black.bgRed(" x "),
+          chalk.black.bgRedBright(" x "),
           ` ${e.response}: Something went wrong`
         );
       }

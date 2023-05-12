@@ -10,15 +10,15 @@ export default class SyncAssets {
     region,
     sourceSpaceId,
     targetSpaceId,
-    startsWith,
-    parentFolderUuid
+    storiesStartsWith,
+    assetFolderName
   ) {
     this.authToken = authToken;
     this.region = region;
     this.sourceSpaceId = sourceSpaceId;
     this.targetSpaceId = targetSpaceId;
-    this.startsWith = startsWith;
-    this.parentFolderUuid = parentFolderUuid;
+    this.storiesStartsWith = storiesStartsWith.toLowerCase();
+    this.assetFolderName = assetFolderName.toLowerCase();
     this.sourceAssetFolders = [];
     this.targetAssetFolders = [];
     this.allSourceAssetFolders = [];
@@ -41,14 +41,14 @@ export default class SyncAssets {
       await this.getAssetFoldersTarget();
 
       console.log();
-      console.log(chalk.black.bgYellow(" o Finding parent folder uuid"));
+      console.log(chalk.black.bgYellow(" o "), "Finding parent folder ");
       const parentFolderSource = this.allSourceAssetFolders.find(
-        (f) => f.uuid === this.parentFolderUuid
+        (f) => f.name.toLowerCase() === this.assetFolderName
       );
       if (!parentFolderSource) {
         console.log(
-          chalk.black.bgRed(" x "),
-          ` Please double check the parent asset folder uuid `
+          chalk.black.bgRedBright(" x "),
+          ` Please double check the parent asset folder name `
         );
         throw "";
       }
@@ -59,37 +59,41 @@ export default class SyncAssets {
       );
       if (!parentFolderTarget) {
         console.log(
-          chalk.black.bgRed(" x "),
-          ` Please double check the parent asset folder uuid `
+          chalk.black.bgRedBright(" x "),
+          ` Please double check the parent asset folder name `
         );
         throw "";
       }
       this.targetAssetFolders.push(parentFolderTarget);
-      console.log(chalk.black.bgGreen(" ✓ Parent folder has been found"));
+      console.log(chalk.black.bgGreen(" ✓ "), "Parent folder has been found ");
 
       console.log();
       console.log(
-        chalk.black.bgYellow(
-          " o Filter out all non child source folder of parent"
-        )
+        chalk.black.bgYellow(" o "),
+        "Filter out all non child source folder of parent "
       );
       await this.getSourceFoldersChildrenAndGrandchildren(
-        this.parentFolderUuid,
+        parentFolderSource.uuid,
         this.allSourceAssetFolders
       );
-      console.log(chalk.black.bgGreen(" ✓ Source asset folders filterd out"));
+      console.log(
+        chalk.black.bgGreen(" ✓ "),
+        "Source asset folders filterd out "
+      );
 
       console.log();
       console.log(
-        chalk.black.bgYellow(
-          " o Filter out all non child target folder of parent"
-        )
+        chalk.black.bgYellow(" o "),
+        "Filter out all non child target folder of parent "
       );
       await this.getTargetFoldersChildrenAndGrandchildren(
         parentFolderTarget.uuid,
         this.allTargetAssetFolders
       );
-      console.log(chalk.black.bgGreen(" ✓ Target asset folders filterd out"));
+      console.log(
+        chalk.black.bgGreen(" ✓ "),
+        "Target asset folders filterd out "
+      );
 
       console.log();
       await this.getAssetsFromSource();
@@ -103,15 +107,18 @@ export default class SyncAssets {
       await this.saveStories();
     } catch (e) {
       console.log(
-        chalk.black.bgRed(" x "),
-        ` ${e.response}: Something went wrong`
+        chalk.black.bgRedBright(" x "),
+        ` ${e.response}: Something went wrong `
       );
       console.log(e);
     }
   }
 
   async getStories() {
-    console.log(chalk.black.bgYellow(" o Fetching stories from target space"));
+    console.log(
+      chalk.black.bgYellow(" o "),
+      "Fetching stories from target space "
+    );
     try {
       const targetStories = [];
       const storiesManagementRequests = [];
@@ -123,7 +130,9 @@ export default class SyncAssets {
           story_only: 1,
           per_page: 100,
           page: 1,
-          ...(this.startsWith ? { starts_with: this.startsWith } : {}),
+          ...(this.storiesStartsWith
+            ? { starts_with: this.storiesStartsWith }
+            : {}),
         }
       );
       const storyPagesTotal = Math.ceil(
@@ -136,7 +145,9 @@ export default class SyncAssets {
             version: "draft",
             per_page: 100,
             page: i,
-            ...(this.startsWith ? { starts_with: this.startsWith } : {}),
+            ...(this.storiesStartsWith
+              ? { starts_with: this.storiesStartsWith }
+              : {}),
           })
         );
         //fetch stories info like published status
@@ -145,7 +156,9 @@ export default class SyncAssets {
             version: "draft",
             per_page: 100,
             page: i,
-            ...(this.startsWith ? { starts_with: this.startsWith } : {}),
+            ...(this.storiesStartsWith
+              ? { starts_with: this.storiesStartsWith }
+              : {}),
           })
         );
       }
@@ -171,9 +184,15 @@ export default class SyncAssets {
           story.unpublished_changes = storyManagement.unpublished_changes;
         }
       });
-      console.log(chalk.black.bgGreen(" ✓ Stories fetched from target space"));
+      console.log(
+        chalk.black.bgGreen(" ✓ "),
+        "Stories fetched from target space "
+      );
     } catch (e) {
-      console.log(chalk.black.bgRed(" x "), `Error fetching the stories.`);
+      console.log(
+        chalk.black.bgRedBright(" x "),
+        `Error fetching the stories. `
+      );
       console.log(e);
       throw e;
     }
@@ -182,7 +201,7 @@ export default class SyncAssets {
   async getAssetFoldersSource() {
     console.log(
       chalk.black.bgYellow(" o "),
-      ` Fetching source space assets folders`
+      ` Fetching source space assets folders `
     );
     try {
       const assetsFolders = await this.storyblok.get(
@@ -194,18 +213,26 @@ export default class SyncAssets {
       console.log(chalk.black.bgGreen(" ✓ "), ` Source folders fetched `);
     } catch (e) {
       console.log(
-        chalk.black.bgRed(" x "),
-        ` ${e.response}: Double check the source space id`
+        chalk.black.bgRedBright(" x "),
+        ` ${e.response}: Double check the source space id `
       );
       throw e;
     }
   }
 
   async getAssetsFromSource() {
-    console.log(chalk.black.bgYellow(" o Fetching assets from source space"));
+    console.log(
+      chalk.black.bgYellow(" o "),
+      "Fetching assets from source space"
+    );
     try {
       const assetsRequests = [];
+
       for (const assetFolder of this.sourceAssetFolders) {
+        console.log(
+          chalk.black.bgCyan(" - "),
+          `finding assets in: ${assetFolder.name}`
+        );
         const assetsPageRequest = await this.storyblok.get(
           `spaces/${this.sourceSpaceId}/assets`,
           {
@@ -213,6 +240,10 @@ export default class SyncAssets {
             page: 1,
             in_folder: assetFolder.id,
           }
+        );
+        console.log(
+          chalk.black.bgCyan(" - "),
+          `Total of ${assetsPageRequest.headers.total} assets found`
         );
         if (assetsPageRequest.headers.total > 0) {
           const assetsPagesTotal = Math.ceil(
@@ -248,14 +279,17 @@ export default class SyncAssets {
         };
       });
 
-      console.log(chalk.black.bgGreen(" ✓ Assets from source Fetched"));
+      console.log(chalk.black.bgGreen(" ✓ "), "Assets from source Fetched ");
     } catch (e) {
       throw e;
     }
   }
 
   async getAssetsFromTarget() {
-    console.log(chalk.black.bgYellow(" o Fetching assets from target space"));
+    console.log(
+      chalk.black.bgYellow(" o "),
+      "Fetching assets from target space "
+    );
     try {
       const assetsRequests = [];
       for (const assetFolder of this.targetAssetFolders) {
@@ -292,7 +326,7 @@ export default class SyncAssets {
         const filedata = this.getAssetData(targetAsset);
         this.targetAssetsFilenames.push(filedata.filename);
       }
-      console.log(chalk.black.bgGreen(" ✓ Assets from target Fetched"));
+      console.log(chalk.black.bgGreen(" ✓ "), "Assets from target Fetched ");
     } catch (e) {
       throw e;
     }
@@ -301,7 +335,7 @@ export default class SyncAssets {
   async getAssetFoldersTarget() {
     console.log(
       chalk.black.bgYellow(" o "),
-      ` Fetching target space assets folders`
+      ` Fetching target space assets folders `
     );
     try {
       const targetAssetsFoldersRequest = await this.storyblok.get(
@@ -314,8 +348,8 @@ export default class SyncAssets {
       console.log(chalk.black.bgGreen(" ✓ "), ` Target folders fetched `);
     } catch (e) {
       console.log(
-        chalk.black.bgRed(" x "),
-        ` ${e.response}: Something went wrong`
+        chalk.black.bgRedBright(" x "),
+        ` ${e.response}: Something went wrong `
       );
       throw e;
     }
@@ -357,7 +391,8 @@ export default class SyncAssets {
 
   async syncSourceAssetFoldersToTarget() {
     console.log(
-      chalk.black.bgYellow(" o Copy over source asset folders to target ")
+      chalk.black.bgYellow(" o "),
+      "Copy over source asset folders to target "
     );
     try {
       await this.getAssetFoldersSource();
@@ -365,7 +400,7 @@ export default class SyncAssets {
 
       console.log(
         chalk.black.bgYellow(" o "),
-        ` Creating asset folders on target space`
+        ` Creating asset folders on target space `
       );
       for (const sourceFolder of this.allSourceAssetFolders) {
         this.createFolder(sourceFolder);
@@ -384,12 +419,12 @@ export default class SyncAssets {
       console.log(chalk.black.bgGreen(" ✓ "), ` Parent asset folders updated `);
       console.log(
         chalk.black.bgGreen(
-          " ✓ Source asset folder are copied over to target space"
+          " ✓ Source asset folder are copied over to target space "
         )
       );
     } catch (e) {
       console.log(
-        chalk.black.bgRed(" x "),
+        chalk.black.bgRedBright(" x "),
         ` ${e.response}: Something went wrong`
       );
       throw e;
@@ -437,19 +472,21 @@ export default class SyncAssets {
 
   async uploadAssets() {
     this.assets = [];
-    console.log(chalk.black.bgYellow(" o Uploading assets to target space"));
+    console.log(
+      chalk.black.bgYellow(" o "),
+      "Uploading assets to target space "
+    );
     try {
       for (const assetsList of this.assetsGroupList) {
         for (const asset of assetsList.assets) {
           const assetUrl = asset.replace("s3.amazonaws.com/", "");
 
-          console.log();
           console.log(
-            chalk.black.bgYellow(" o "),
+            chalk.black.bgCyan(" - "),
             `Uploading asset: ${assetUrl} `
           );
           console.log(
-            chalk.black.bgYellow(" o "),
+            chalk.black.bgCyan(" - "),
             `To folder: ${assetsList.assetFolderName} `
           );
           this.assets.push({
@@ -468,12 +505,12 @@ export default class SyncAssets {
     const assetData = this.getAssetData(asset);
 
     if (this.targetAssetsFilenames.includes(assetData.filename)) {
-      console.log(chalk.black.bgCyan(" - Assets Already exists"));
+      console.log(chalk.black.bgCyan(" - "), "Assets Already exists ");
       return;
     }
 
     try {
-      console.log(chalk.black.bgYellow(" o "), "Downloading asset locally");
+      console.log(chalk.black.bgCyan(" - "), "Downloading asset locally ");
       await this.downloadAsset(assetData, asset);
       let newAssetPayload = {
         filename: assetData.filename,
@@ -481,7 +518,7 @@ export default class SyncAssets {
         asset_folder_id: assetFolderId,
       };
 
-      console.log(chalk.black.bgYellow(" o "), "Post asset to target space");
+      console.log(chalk.black.bgCyan(" - "), "Post asset to target space ");
       const newAssetRequest = await this.storyblok.post(
         `spaces/${this.targetSpaceId}/assets`,
         newAssetPayload
@@ -527,7 +564,7 @@ export default class SyncAssets {
               });
           }
         });
-        console.log(chalk.black.bgGreen(" ✓ Assets uploaded"));
+        console.log(chalk.black.bgGreen(" ✓ Asset uploaded "));
       });
     } catch (err) {
       if (
@@ -587,7 +624,8 @@ export default class SyncAssets {
 
   async replaceAssetsInStories() {
     console.log(
-      chalk.black.bgYellow(" o Replace assets in stories from target space")
+      chalk.black.bgYellow(" o "),
+      "Replace assets in stories from target space "
     );
     this.updatedStories = this.storiesList.slice(0);
 
@@ -597,12 +635,11 @@ export default class SyncAssets {
         "g"
       );
 
-      console.log();
       console.log(
-        chalk.black.bgYellow(" o "),
+        chalk.black.bgCyan(" - "),
         `Replacing: ${asset.original_url}`
       );
-      console.log(chalk.black.bgYellow(" o "), `With: ${asset.new_url}`);
+      console.log(chalk.black.bgCyan(" - "), `With: ${asset.new_url}`);
       if (asset.new_url) {
         this.updatedStories = JSON.parse(
           JSON.stringify(this.updatedStories).replace(
@@ -612,11 +649,11 @@ export default class SyncAssets {
         );
       }
     }
-    console.log(chalk.black.bgGreen(" ✓ Asset replaces in stories"));
+    console.log(chalk.black.bgGreen(" ✓ Asset replaces in stories "));
   }
 
   async saveStories() {
-    console.log(chalk.black.bgYellow(" o Save stories"));
+    console.log(chalk.black.bgYellow(" o ", "Saving stories "));
     let total = 0;
     const storiesWithUpdates = this.updatedStories.filter((story) => {
       const originalStory = this.storiesList.find((s) => s.id === story.id);
