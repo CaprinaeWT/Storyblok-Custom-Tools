@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "chalk": "^5.2.0",
+    "commander": "^10.0.1",
+    "storyblok-js-client": "^5.10.5"
+  }
+}
