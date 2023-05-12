@@ -5,11 +5,11 @@ import https from "https";
 import chalk from "chalk";
 
 export default class DeleteAssets {
-  constructor(authToken, region, spaceId, startsWith) {
+  constructor(authToken, region, spaceId, assetFolderName) {
     this.authToken = authToken;
     this.region = region;
     this.spaceId = spaceId;
-    this.startsWith = startsWith.toLowerCase();
+    this.assetFolderName = assetFolderName.toLowerCase();
     this.allAssetFolders = [];
     this.folders = [];
     this.assets = [];
@@ -30,7 +30,7 @@ export default class DeleteAssets {
       console.log();
       console.log(
         chalk.black.bgYellow(" o "),
-        `Finding all children folders under: ${this.startsWith}`
+        `Finding all children folders under: ${this.assetFolderName}`
       );
       await this.getParentFoldersChildrenAndGrandchildren(
         this.parentAssetFolder.uuid
@@ -73,11 +73,11 @@ export default class DeleteAssets {
   async getParentAssetFolder() {
     console.log(
       chalk.black.bgYellow(" o "),
-      `Finding folder that starts with ${this.startsWith}`
+      `Finding folder that starts with ${this.assetFolderName}`
     );
 
     this.parentAssetFolder = this.allAssetFolders.find(
-      (f) => f.name.toLowerCase() === this.startsWith
+      (f) => f.name.toLowerCase() === this.assetFolderName
     );
 
     if (!this.parentAssetFolder) {
