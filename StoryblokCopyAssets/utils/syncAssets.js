@@ -136,8 +136,9 @@ export default class SyncAssets {
         console.log(e);
         throw e;
       }
+    } else {
+      console.log(chalk.black.bgCyan(" - "), "tmp Directory already exists");
     }
-    console.log(chalk.black.bgCyan(" - "), "tmp Directory already exists");
   }
 
   async getStories() {
