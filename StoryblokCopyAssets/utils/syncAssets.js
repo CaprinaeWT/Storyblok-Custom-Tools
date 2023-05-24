@@ -3,6 +3,8 @@ import fs from "fs";
 import FormData from "form-data";
 import https from "https";
 import chalk from "chalk";
+import os from "os";
+import path from "path";
 
 export default class SyncAssets {
   constructor(
@@ -10,20 +12,19 @@ export default class SyncAssets {
     region,
     sourceSpaceId,
     targetSpaceId,
-    storiesStartsWith,
     assetFolderName
   ) {
     this.authToken = authToken;
     this.region = region;
     this.sourceSpaceId = sourceSpaceId;
     this.targetSpaceId = targetSpaceId;
-    this.storiesStartsWith = storiesStartsWith.toLowerCase();
     this.assetFolderName = assetFolderName.toLowerCase();
     this.sourceAssetFolders = [];
     this.targetAssetFolders = [];
     this.allSourceAssetFolders = [];
     this.allTargetAssetFolders = [];
     this.targetAssetsFilenames = [];
+    this.dir = "/tmp/storyblok-helper";
   }
 
   async start() {
@@ -31,6 +32,9 @@ export default class SyncAssets {
       console.log(chalk.black.bgYellow(" o Fetching Storyblok client"));
       const auth = new Auth(this.authToken, this.region, this.targetSpaceId);
       this.storyblok = await auth.getStoryblokClient();
+
+      console.log();
+      await this.creatingTempFolder();
 
       console.log();
       await this.getStories();
@@ -114,6 +118,28 @@ export default class SyncAssets {
     }
   }
 
+  creatingTempFolder() {
+    console.log(
+      chalk.black.bgYellow(" o "),
+      "Creating tmp Folder if none exists"
+    );
+
+    if (!fs.existsSync(this.dir)) {
+      try {
+        fs.mkdirSync(this.dir);
+        console.log(chalk.black.bgGreen(" ✓ "), "tmp Directory Created");
+      } catch (err) {
+        console.log(
+          chalk.black.bgRedBright(" x "),
+          `Error Creating Directory `
+        );
+        console.log(e);
+        throw e;
+      }
+    }
+    console.log(chalk.black.bgCyan(" - "), "tmp Directory already exists");
+  }
+
   async getStories() {
     console.log(
       chalk.black.bgYellow(" o "),
@@ -130,9 +156,6 @@ export default class SyncAssets {
           story_only: 1,
           per_page: 100,
           page: 1,
-          ...(this.storiesStartsWith
-            ? { starts_with: this.storiesStartsWith }
-            : {}),
         }
       );
       const storyPagesTotal = Math.ceil(
@@ -145,9 +168,6 @@ export default class SyncAssets {
             version: "draft",
             per_page: 100,
             page: i,
-            ...(this.storiesStartsWith
-              ? { starts_with: this.storiesStartsWith }
-              : {}),
           })
         );
         //fetch stories info like published status
@@ -156,9 +176,6 @@ export default class SyncAssets {
             version: "draft",
             per_page: 100,
             page: i,
-            ...(this.storiesStartsWith
-              ? { starts_with: this.storiesStartsWith }
-              : {}),
           })
         );
       }
@@ -593,11 +610,12 @@ export default class SyncAssets {
 
     return {
       filename: url.split("?")[0].split("/").pop(),
-      folder: `./temp/${url.split("?")[0].split("/").slice(0, -1).pop()}`,
-      filepath: `./temp/${url.split("?")[0].split("/").slice(0, -1).pop()}/${url
+      folder: `${this.dir}/${url.split("?")[0].split("/").slice(0, -1).pop()}`,
+      filepath: `${this.dir}/${url
         .split("?")[0]
         .split("/")
-        .pop()}`,
+        .slice(0, -1)
+        .pop()}/${url.split("?")[0].split("/").pop()}`,
       ext: url.split("?")[0].split("/").pop().split(".").pop(),
       dimensions: dimensions,
     };
